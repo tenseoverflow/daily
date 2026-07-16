@@ -22,7 +22,13 @@ async function runPrompt(env: Env, prompt: string): Promise<string> {
 }
 
 function fallbackSummary(h: RankedHeadline, article: ScrapedArticle): string {
-  const base = article.text || h.description || h.title;
+  // Prefer RSS blurb over noisy page chrome when scrape quality is weak.
+  const base =
+    (h.description && h.description.length > 40
+      ? h.description
+      : article.text) ||
+    article.text ||
+    h.title;
   const sentence = base.split(/(?<=[.!?])\s+/).slice(0, 3).join(" ");
   return sentence.slice(0, 480) || h.title;
 }

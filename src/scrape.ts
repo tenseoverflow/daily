@@ -25,9 +25,25 @@ function feedForUrl(url: string) {
   }
 }
 
+function looksLikeChrome(text: string): boolean {
+  const t = text.toLowerCase();
+  const chromeHits = [
+    "logi sisse",
+    "esimene kuu",
+    "omx baltic",
+    "omx tallinn",
+    "nasdaq",
+    "s&p 500",
+    "cookie",
+    "küpsiste",
+  ].filter((k) => t.includes(k)).length;
+  return chromeHits >= 2;
+}
+
 function looksPaywalled(text: string): boolean {
   const t = text.toLowerCase();
   if (text.trim().length < 400) return true;
+  if (looksLikeChrome(text)) return true;
   return (
     t.includes("tellijatele") ||
     t.includes("ainult tellijatele") ||
@@ -35,6 +51,14 @@ function looksPaywalled(text: string): boolean {
     t.includes("subscribe") ||
     t.includes("paywall")
   );
+}
+
+function usableArticleText(text: string, fallback: string): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned || looksPaywalled(cleaned) || looksLikeChrome(cleaned)) {
+    return fallback.trim();
+  }
+  return cleaned;
 }
 
 function extractFromHtml(html: string, fallbackTitle: string): {
@@ -219,14 +243,19 @@ async function scrapeWithBrowser(
       timeout: 45000,
     });
     await new Promise((r) => setTimeout(r, 1500));
-    const text = (await extractPageText(page)).slice(0, 12000);
+    const raw = (await extractPageText(page)).slice(0, 12000);
     const title = (await page.title()) || headline.title;
+    const text = usableArticleText(raw, headline.description || headline.title);
+    const scraped =
+      text.length > 200 &&
+      !looksPaywalled(text) &&
+      text !== (headline.description || "").trim();
     return {
       url: headline.url,
       title,
       text,
-      scraped: text.length > 200,
-      error: text.length > 200 ? undefined : "Extracted text too short",
+      scraped,
+      error: scraped ? undefined : "Extracted text too short or paywalled",
     };
   } finally {
     await page.close().catch(() => undefined);
@@ -252,15 +281,18 @@ async function scrapeWithFetch(headline: RankedHeadline): Promise<ScrapedArticle
   }
   const html = await res.text();
   const { title, text } = extractFromHtml(html, headline.title);
+  const body = usableArticleText(text, headline.description || "");
+  const scraped =
+    Boolean(body) &&
+    body !== (headline.description || "").trim() &&
+    body.length > 400 &&
+    !looksPaywalled(body);
   return {
     url: headline.url,
     title,
-    text: text || headline.description,
-    scraped: !looksPaywalled(text) && text.length > 400,
-    error:
-      looksPaywalled(text) || text.length <= 400
-        ? "Likely paywalled or sparse HTML"
-        : undefined,
+    text: body || headline.description || headline.title,
+    scraped,
+    error: scraped ? undefined : "Likely paywalled or sparse HTML",
   };
 }
 
