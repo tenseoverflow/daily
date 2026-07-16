@@ -23,7 +23,7 @@ describe("describeAiConfig", () => {
     );
     expect(cfg.provider).toBe("cursor");
     expect(cfg.cursorConfigured).toBe(true);
-    expect(cfg.cursorModel).toBe("composer-2");
+    expect(cfg.cursorModel).toBeNull();
     expect(cfg.cursorApiBaseUrl).toBe("https://api.cursor.com");
   });
 });
@@ -88,7 +88,7 @@ describe("chat cursor", () => {
           const body = JSON.parse(String(init?.body));
           expect(body.prompt.text).toContain("USER:");
           expect(body.prompt.text).toContain("hi");
-          expect(body.model.id).toBe("composer-2");
+          expect(body.model).toBeUndefined();
           return Response.json({
             agent: { id: "bc-test" },
             run: { id: "run-test" },
@@ -116,7 +116,6 @@ describe("chat cursor", () => {
       baseEnv({
         AI_PROVIDER: "cursor",
         CURSOR_API_KEY: "crsr_test",
-        CURSOR_MODEL: "composer-2",
       }),
       { messages: [{ role: "user", content: "hi" }] },
     );

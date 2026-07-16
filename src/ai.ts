@@ -49,8 +49,9 @@ function cursorApiBase(env: Env): string {
   );
 }
 
-function cursorModel(env: Env): string {
-  return env.CURSOR_MODEL || "composer-2";
+function cursorModel(env: Env): string | undefined {
+  const id = env.CURSOR_MODEL?.trim();
+  return id || undefined;
 }
 
 function cursorAuthHeader(apiKey: string): string {
@@ -195,8 +196,9 @@ async function chatCursor(env: Env, options: ChatOptions): Promise<string> {
     prompt: { text: formatCursorPrompt(options.messages) },
     name: "daily-digest-ai",
   };
-  if (env.CURSOR_MODEL) {
-    body.model = { id: cursorModel(env) };
+  const modelId = cursorModel(env);
+  if (modelId) {
+    body.model = { id: modelId };
   }
 
   const createRes = await cursorFetch(env, "/v1/agents", {
@@ -206,7 +208,13 @@ async function chatCursor(env: Env, options: ChatOptions): Promise<string> {
 
   if (!createRes.ok) {
     const errBody = await createRes.text().catch(() => "");
-    throw new Error(`Cursor create ${createRes.status}: ${errBody.slice(0, 240)}`);
+    const hint =
+      createRes.status === 400 && errBody.includes("invalid_model")
+        ? ` List valid ids: curl -sS ${cursorApiBase(env)}/v1/models -H "Authorization: Bearer $CURSOR_API_KEY" | jq '.items[].id' — or unset CURSOR_MODEL to use your account default.`
+        : "";
+    throw new Error(
+      `Cursor create ${createRes.status}: ${errBody.slice(0, 240)}${hint}`,
+    );
   }
 
   const created = (await createRes.json()) as {
@@ -232,7 +240,7 @@ export function describeAiConfig(env: Env): {
   ollamaModel: string;
   workersModel: string;
   cursorConfigured: boolean;
-  cursorModel: string;
+  cursorModel: string | null;
   cursorApiBaseUrl: string;
 } {
   return {
@@ -241,7 +249,7 @@ export function describeAiConfig(env: Env): {
     ollamaModel: ollamaModel(env),
     workersModel: AI_MODEL,
     cursorConfigured: Boolean(env.CURSOR_API_KEY),
-    cursorModel: cursorModel(env),
+    cursorModel: cursorModel(env) ?? null,
     cursorApiBaseUrl: cursorApiBase(env),
   };
 }

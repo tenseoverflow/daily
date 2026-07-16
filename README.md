@@ -35,12 +35,15 @@ ollama pull llama3.1
 # Cursor API (create key at cursor.com/dashboard → API Keys)
 # npx wrangler secret put CURSOR_API_KEY
 # AI_PROVIDER=cursor
-# CURSOR_MODEL=composer-2
+# Omit CURSOR_MODEL to use your account default, or pick one:
+# curl -sS https://api.cursor.com/v1/models -H "Authorization: Bearer $CURSOR_API_KEY"
+# CURSOR_MODEL=composer-2.5
 ```
 
 Notes:
 - Deployed Workers can only reach Ollama if `OLLAMA_BASE_URL` is a public/tunneled host.
 - Cursor has no OpenAI-style `/v1/chat/completions`; Daily uses a **no-repo cloud agent** per prompt and reads the finished run’s `result`. That is slower and uses Cloud Agent quota — prefer Workers/Ollama for routine digests.
+- If you see `invalid_model`, unset `CURSOR_MODEL` or set it to an id returned by `GET /v1/models` for your key.
 
 ## Setup
 
