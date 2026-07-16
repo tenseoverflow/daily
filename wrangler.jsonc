@@ -32,9 +32,11 @@
     "DIGEST_HOUR": "9",
     "TOP_HEADLINES": "8",
     "MAX_FEED_ITEMS": "40",
-    // workers | ollama | auto (auto = Workers AI, then Ollama fallback)
+    // workers | ollama | cursor | auto (auto = Workers → Ollama → Cursor)
     "AI_PROVIDER": "auto",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
-    "OLLAMA_MODEL": "llama3.1"
+    "OLLAMA_MODEL": "llama3.1",
+    "CURSOR_API_BASE_URL": "https://api.cursor.com",
+    "CURSOR_MODEL": "composer-2"
   }
 }

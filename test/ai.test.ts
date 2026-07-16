@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { chat, describeAiConfig } from "../src/ai";
 import type { Env } from "../src/types";
 
-function baseEnv(overrides: Partial<Env> = {}): Env {
+function baseEnv(overrides: Record<string, unknown> = {}): Env {
   return {
     AI_PROVIDER: "ollama",
     OLLAMA_BASE_URL: "http://127.0.0.1:11434",
     OLLAMA_MODEL: "llama3.1",
     ...overrides,
-  } as Env;
+  } as unknown as Env;
 }
 
 afterEach(() => {
@@ -17,11 +17,14 @@ afterEach(() => {
 });
 
 describe("describeAiConfig", () => {
-  it("exposes provider and ollama defaults", () => {
-    const cfg = describeAiConfig(baseEnv({ AI_PROVIDER: "auto" }));
-    expect(cfg.provider).toBe("auto");
-    expect(cfg.ollamaBaseUrl).toBe("http://127.0.0.1:11434");
-    expect(cfg.ollamaModel).toBe("llama3.1");
+  it("exposes provider and cursor flags", () => {
+    const cfg = describeAiConfig(
+      baseEnv({ AI_PROVIDER: "cursor", CURSOR_API_KEY: "crsr_test" }),
+    );
+    expect(cfg.provider).toBe("cursor");
+    expect(cfg.cursorConfigured).toBe(true);
+    expect(cfg.cursorModel).toBe("composer-2");
+    expect(cfg.cursorApiBaseUrl).toBe("https://api.cursor.com");
   });
 });
 
@@ -68,5 +71,62 @@ describe("chat ollama", () => {
     await expect(
       chat(baseEnv(), { messages: [{ role: "user", content: "hi" }] }),
     ).rejects.toThrow(/Ollama 404/);
+  });
+});
+
+describe("chat cursor", () => {
+  it("creates a no-repo agent, polls run result, archives", async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const method = (init?.method || "GET").toUpperCase();
+        calls.push({ url, method });
+
+        if (url.endsWith("/v1/agents") && method === "POST") {
+          const body = JSON.parse(String(init?.body));
+          expect(body.prompt.text).toContain("USER:");
+          expect(body.prompt.text).toContain("hi");
+          expect(body.model.id).toBe("composer-2");
+          return Response.json({
+            agent: { id: "bc-test" },
+            run: { id: "run-test" },
+          });
+        }
+
+        if (url.includes("/v1/agents/bc-test/runs/run-test") && method === "GET") {
+          return Response.json({
+            id: "run-test",
+            agentId: "bc-test",
+            status: "FINISHED",
+            result: "  ranked headlines json  ",
+          });
+        }
+
+        if (url.endsWith("/v1/agents/bc-test/archive") && method === "POST") {
+          return new Response(null, { status: 200 });
+        }
+
+        return new Response("unexpected", { status: 500 });
+      }),
+    );
+
+    const text = await chat(
+      baseEnv({
+        AI_PROVIDER: "cursor",
+        CURSOR_API_KEY: "crsr_test",
+        CURSOR_MODEL: "composer-2",
+      }),
+      { messages: [{ role: "user", content: "hi" }] },
+    );
+
+    expect(text).toBe("ranked headlines json");
+    expect(calls.some((c) => c.url.endsWith("/v1/agents") && c.method === "POST")).toBe(
+      true,
+    );
+    expect(
+      calls.some((c) => c.url.includes("/archive") && c.method === "POST"),
+    ).toBe(true);
   });
 });
