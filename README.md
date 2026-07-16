@@ -29,15 +29,23 @@ Put the returned database id into `wrangler.jsonc` → `d1_databases[0].database
 npm run db:migrate:remote
 ```
 
-### Secrets
+### Secrets (per publisher)
+
+| Secret | Used for | Login page |
+|--------|----------|------------|
+| `ARIPAEV_EMAIL` / `ARIPAEV_PASSWORD` | Äripäev paywall scrape | [iseteenindus.aripaev.ee/et/login](https://iseteenindus.aripaev.ee/et/login) |
+| `DELFI_EMAIL` / `DELFI_PASSWORD` | Delfi paywall scrape (Piano ID) | [delfi.ee/klient/konto](https://www.delfi.ee/klient/konto) (Logi sisse) |
+| `DIGEST_ACCESS_TOKEN` | Optional site lock | — |
 
 ```bash
-npx wrangler secret put NEWS_EMAIL
-npx wrangler secret put NEWS_PASSWORD
-npx wrangler secret put DIGEST_ACCESS_TOKEN   # optional site lock
+npx wrangler secret put ARIPAEV_EMAIL
+npx wrangler secret put ARIPAEV_PASSWORD
+npx wrangler secret put DELFI_EMAIL
+npx wrangler secret put DELFI_PASSWORD
+npx wrangler secret put DIGEST_ACCESS_TOKEN   # optional
 ```
 
-`NEWS_EMAIL` / `NEWS_PASSWORD` are used for Äripäev and Delfi login during scrape. ERR is open.
+ERR is open and needs no credentials. Confirm each account works in a normal browser on the login page above before deploying secrets.
 
 If you set `DIGEST_ACCESS_TOKEN`, open the site once as `https://<worker>/?token=YOUR_TOKEN` to set a cookie.
 

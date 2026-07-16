@@ -13,6 +13,8 @@ export const FEEDS: FeedConfig[] = [
     kind: "rss",
     hosts: ["aripaev.ee"],
     requiresLogin: true,
+    // Official Ä-konto / iseteenindus login (SSO for aripaev.ee)
+    loginUrl: "https://iseteenindus.aripaev.ee/et/login",
   },
   {
     id: "delfi",
@@ -21,6 +23,8 @@ export const FEEDS: FeedConfig[] = [
     kind: "html",
     hosts: ["delfi.ee"],
     requiresLogin: true,
+    // Delfi uses Piano ID; login is opened from the site / account area
+    loginUrl: "https://www.delfi.ee/klient/konto",
   },
   {
     id: "err",

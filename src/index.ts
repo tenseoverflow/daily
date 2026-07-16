@@ -46,7 +46,14 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       ok: true,
       timezone: env.TIMEZONE,
       digestHour: env.DIGEST_HOUR,
-      hasNewsCredentials: Boolean(env.NEWS_EMAIL && env.NEWS_PASSWORD),
+      credentials: {
+        aripaev: Boolean(env.ARIPAEV_EMAIL && env.ARIPAEV_PASSWORD),
+        delfi: Boolean(env.DELFI_EMAIL && env.DELFI_PASSWORD),
+      },
+      loginPages: {
+        aripaev: "https://iseteenindus.aripaev.ee/et/login",
+        delfi: "https://www.delfi.ee/klient/konto",
+      },
       authRequired: Boolean(env.DIGEST_ACCESS_TOKEN),
     });
   }

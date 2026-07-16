@@ -1,8 +1,12 @@
 export type Env = Cloudflare.Env & {
-  /** Shared login email for paywalled sources (Äripäev / Delfi). */
-  NEWS_EMAIL?: string;
-  /** Shared login password for paywalled sources. */
-  NEWS_PASSWORD?: string;
+  /** Äripäev (iseteenindus) login email. */
+  ARIPAEV_EMAIL?: string;
+  /** Äripäev (iseteenindus) login password. */
+  ARIPAEV_PASSWORD?: string;
+  /** Delfi / Piano login email. */
+  DELFI_EMAIL?: string;
+  /** Delfi / Piano login password. */
+  DELFI_PASSWORD?: string;
   /** Optional bearer token protecting the digest API + site. */
   DIGEST_ACCESS_TOKEN?: string;
 };
@@ -17,6 +21,8 @@ export interface FeedConfig {
   /** Host substrings that belong to this source when matching article URLs. */
   hosts: string[];
   requiresLogin?: boolean;
+  /** Publisher account login page used for scrape auth + setup docs. */
+  loginUrl?: string;
 }
 
 export interface Headline {

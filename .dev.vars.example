@@ -1,3 +1,10 @@
-NEWS_EMAIL=you@example.com
-NEWS_PASSWORD=replace-me
+# Äripäev Ä-konto — https://iseteenindus.aripaev.ee/et/login
+ARIPAEV_EMAIL=you@example.com
+ARIPAEV_PASSWORD=replace-me
+
+# Delfi (Piano ID) — open login from https://www.delfi.ee/klient/konto
+DELFI_EMAIL=you@example.com
+DELFI_PASSWORD=replace-me
+
+# Optional site lock
 DIGEST_ACCESS_TOKEN=optional-long-random-string

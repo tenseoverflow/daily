@@ -114,41 +114,77 @@ async function extractPageText(page: Page): Promise<string> {
   }, ARTICLE_SELECTORS);
 }
 
+const EMAIL_SEL =
+  'input[type="email"], input[name="email"], input[name="username"], input#email, input#username, input[autocomplete="username"]';
+const PASS_SEL =
+  'input[type="password"], input[name="password"], input#password, input[autocomplete="current-password"]';
+
+async function fillAndSubmitLogin(
+  page: Page,
+  email: string,
+  password: string,
+  timeoutMs = 15000,
+): Promise<boolean> {
+  try {
+    await page.waitForSelector(EMAIL_SEL, { timeout: timeoutMs });
+    await page.click(EMAIL_SEL, { clickCount: 3 });
+    await page.type(EMAIL_SEL, email, { delay: 15 });
+    await page.waitForSelector(PASS_SEL, { timeout: timeoutMs });
+    await page.click(PASS_SEL, { clickCount: 3 });
+    await page.type(PASS_SEL, password, { delay: 15 });
+
+    await Promise.all([
+      page
+        .waitForNavigation({ waitUntil: "domcontentloaded", timeout: 30000 })
+        .catch(() => undefined),
+      page.evaluate(() => {
+        const btn =
+          document.querySelector<HTMLButtonElement>(
+            'button[type="submit"], input[type="submit"]',
+          ) ||
+          Array.from(document.querySelectorAll("button")).find((b) =>
+            /logi|sisene|sign in|login/i.test(b.textContent || ""),
+          );
+        btn?.click();
+      }),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function loginAripaev(
   page: Page,
   email: string,
   password: string,
 ): Promise<void> {
-  await page.goto("https://www.aripaev.ee/login", {
+  // Official Ä-konto portal (SSO used across aripaev.ee)
+  await page.goto("https://iseteenindus.aripaev.ee/et/login", {
     waitUntil: "domcontentloaded",
     timeout: 45000,
   });
 
-  const emailSel =
-    'input[type="email"], input[name="email"], input[name="username"], input#email, input#username';
-  const passSel = 'input[type="password"], input[name="password"], input#password';
+  let ok = await fillAndSubmitLogin(page, email, password, 20000);
+  if (!ok) {
+    // Fallback: main-site login entry (SSO plugin)
+    await page.goto("https://www.aripaev.ee/login", {
+      waitUntil: "domcontentloaded",
+      timeout: 45000,
+    });
+    ok = await fillAndSubmitLogin(page, email, password, 20000);
+  }
+  if (!ok) {
+    throw new Error("Äripäev login form not found");
+  }
 
-  await page.waitForSelector(emailSel, { timeout: 15000 });
-  await page.click(emailSel, { clickCount: 3 });
-  await page.type(emailSel, email, { delay: 15 });
-  await page.click(passSel, { clickCount: 3 });
-  await page.type(passSel, password, { delay: 15 });
-
-  await Promise.all([
-    page
-      .waitForNavigation({ waitUntil: "domcontentloaded", timeout: 30000 })
-      .catch(() => undefined),
-    page.evaluate(() => {
-      const btn =
-        document.querySelector<HTMLButtonElement>(
-          'button[type="submit"], input[type="submit"]',
-        ) ||
-        Array.from(document.querySelectorAll("button")).find((b) =>
-          /logi|sisene|sign in|login/i.test(b.textContent || ""),
-        );
-      btn?.click();
-    }),
-  ]);
+  // Warm SSO cookie onto the news domain
+  await page
+    .goto("https://www.aripaev.ee/", {
+      waitUntil: "domcontentloaded",
+      timeout: 45000,
+    })
+    .catch(() => undefined);
 }
 
 async function loginDelfi(
@@ -156,52 +192,80 @@ async function loginDelfi(
   email: string,
   password: string,
 ): Promise<void> {
-  // Delfi login UI shifts; try common account entry points.
+  // Delfi auth is Piano ID (auth.piano.delfi.ee), opened from the site UI.
+  // Account hub: https://www.delfi.ee/klient/konto
   const candidates = [
+    "https://www.delfi.ee/klient/konto",
     "https://www.delfi.ee/",
-    "https://account.delfi.ee/login",
-    "https://www.delfi.ee/login",
   ];
 
   for (const url of candidates) {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: 45000,
+    });
 
-    // Open login modal / link if present
+    // Give Piano SDK a moment, then open "Logi sisse"
+    await new Promise((r) => setTimeout(r, 2000));
     await page.evaluate(() => {
       const el = Array.from(
-        document.querySelectorAll("a, button, span"),
-      ).find((n) => /logi sisse|sisene|login/i.test(n.textContent || ""));
+        document.querySelectorAll("a, button, span, div"),
+      ).find((n) =>
+        /^(logi sisse|sisene|login)$/i.test((n.textContent || "").trim()),
+      );
       (el as HTMLElement | undefined)?.click();
     });
 
-    const emailSel =
-      'input[type="email"], input[name="email"], input[name="username"], input#email';
-    const passSel = 'input[type="password"], input[name="password"]';
-
-    try {
-      await page.waitForSelector(emailSel, { timeout: 5000 });
-      await page.type(emailSel, email, { delay: 15 });
-      await page.type(passSel, password, { delay: 15 });
-      await Promise.all([
-        page
-          .waitForNavigation({ waitUntil: "domcontentloaded", timeout: 25000 })
-          .catch(() => undefined),
-        page.evaluate(() => {
+    // Piano may render in an iframe
+    const frames = page.frames();
+    for (const frame of [page.mainFrame(), ...frames]) {
+      try {
+        const emailHandle = await frame.waitForSelector(EMAIL_SEL, {
+          timeout: 4000,
+        });
+        if (!emailHandle) continue;
+        await emailHandle.click({ clickCount: 3 });
+        await emailHandle.type(email, { delay: 15 });
+        const passHandle = await frame.waitForSelector(PASS_SEL, {
+          timeout: 4000,
+        });
+        if (!passHandle) continue;
+        await passHandle.click({ clickCount: 3 });
+        await passHandle.type(password, { delay: 15 });
+        await frame.evaluate(() => {
           const btn =
             document.querySelector<HTMLButtonElement>(
               'button[type="submit"], input[type="submit"]',
             ) ||
             Array.from(document.querySelectorAll("button")).find((b) =>
-              /logi|sisene|sign in|login/i.test(b.textContent || ""),
+              /logi|sisene|sign in|login|jätka|continue/i.test(
+                b.textContent || "",
+              ),
             );
           btn?.click();
-        }),
-      ]);
-      return;
-    } catch {
-      // try next candidate
+        });
+        await new Promise((r) => setTimeout(r, 3000));
+        return;
+      } catch {
+        // try next frame / candidate
+      }
     }
   }
+
+  throw new Error("Delfi/Piano login form not found");
+}
+
+function credentialsForSource(
+  env: Env,
+  sourceId: string,
+): { email?: string; password?: string } {
+  if (sourceId === "aripaev") {
+    return { email: env.ARIPAEV_EMAIL, password: env.ARIPAEV_PASSWORD };
+  }
+  if (sourceId === "delfi") {
+    return { email: env.DELFI_EMAIL, password: env.DELFI_PASSWORD };
+  }
+  return {};
 }
 
 async function ensureLoggedIn(
@@ -211,9 +275,11 @@ async function ensureLoggedIn(
   logged: Set<string>,
 ): Promise<void> {
   if (logged.has(sourceId)) return;
-  const email = env.NEWS_EMAIL;
-  const password = env.NEWS_PASSWORD;
-  if (!email || !password) return;
+  const { email, password } = credentialsForSource(env, sourceId);
+  if (!email || !password) {
+    console.warn(`Missing credentials for ${sourceId}; skipping login`);
+    return;
+  }
 
   const page = await browser.newPage();
   try {
