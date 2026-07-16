@@ -11,9 +11,28 @@ Personal morning news digest for Estonia. Every day at **09:00 Europe/Tallinn** 
 
 - Cloudflare Workers (`scheduled` cron + HTTP API)
 - D1 (digest storage)
-- Workers AI (ranking + summaries)
+- Workers AI **or Ollama** (ranking + summaries)
 - Browser Rendering / Puppeteer (authenticated scrape)
 - Static site in `public/`
+
+### AI providers
+
+| `AI_PROVIDER` | Behavior |
+|---------------|----------|
+| `workers` (default) | Cloudflare Workers AI |
+| `ollama` | Local/remote [Ollama](https://ollama.com) at `OLLAMA_BASE_URL` |
+| `auto` | Try Workers AI, fall back to Ollama |
+
+```bash
+# local Ollama (good with wrangler --local)
+ollama pull llama3.1
+# in .dev.vars:
+# AI_PROVIDER=ollama
+# OLLAMA_BASE_URL=http://127.0.0.1:11434
+# OLLAMA_MODEL=llama3.1
+```
+
+Deployed Workers can only reach Ollama if `OLLAMA_BASE_URL` is a public/tunneled host, not your laptop’s localhost.
 
 ## Setup
 

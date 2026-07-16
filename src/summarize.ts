@@ -1,4 +1,4 @@
-import { AI_MODEL } from "./config";
+import { chat } from "./ai";
 import type { Env, RankedHeadline, ScrapedArticle, SummarizedArticle } from "./types";
 
 function clip(text: string, max = 5000): string {
@@ -6,7 +6,7 @@ function clip(text: string, max = 5000): string {
 }
 
 async function runPrompt(env: Env, prompt: string): Promise<string> {
-  const result = (await env.AI.run(AI_MODEL, {
+  return chat(env, {
     messages: [
       {
         role: "system",
@@ -15,10 +15,9 @@ async function runPrompt(env: Env, prompt: string): Promise<string> {
       },
       { role: "user", content: prompt },
     ],
-    max_tokens: 700,
+    maxTokens: 700,
     temperature: 0.3,
-  })) as { response?: string };
-  return (result.response ?? "").trim();
+  });
 }
 
 function fallbackSummary(h: RankedHeadline, article: ScrapedArticle): string {

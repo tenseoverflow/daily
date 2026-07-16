@@ -1,4 +1,5 @@
-import { AI_MODEL, intVar } from "./config";
+import { chat } from "./ai";
+import { intVar } from "./config";
 import type { Env, Headline, RankedHeadline } from "./types";
 
 interface RankRow {
@@ -92,7 +93,7 @@ Headlines:
 ${JSON.stringify(catalog, null, 2)}`;
 
   try {
-    const result = (await env.AI.run(AI_MODEL, {
+    const text = await chat(env, {
       messages: [
         {
           role: "system",
@@ -101,11 +102,10 @@ ${JSON.stringify(catalog, null, 2)}`;
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 1200,
+      maxTokens: 1200,
       temperature: 0.2,
-    })) as { response?: string };
+    });
 
-    const text = result.response ?? "";
     const arr = extractJsonArray(text);
     if (!arr) return heuristicRank(headlines, topN);
 

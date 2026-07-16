@@ -9,6 +9,12 @@ export type Env = Cloudflare.Env & {
   DELFI_PASSWORD?: string;
   /** Optional bearer token protecting the digest API + site. */
   DIGEST_ACCESS_TOKEN?: string;
+  /** AI backend: workers | ollama | auto */
+  AI_PROVIDER?: string;
+  /** Ollama base URL (default http://127.0.0.1:11434). */
+  OLLAMA_BASE_URL?: string;
+  /** Ollama model name (default llama3.1). */
+  OLLAMA_MODEL?: string;
 };
 
 export type FeedKind = "rss" | "html";

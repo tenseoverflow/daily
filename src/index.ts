@@ -1,3 +1,4 @@
+import { describeAiConfig } from "./ai";
 import { getDigestByDate, getLatestDigest, listDigestDates } from "./db";
 import { runDailyDigest } from "./pipeline";
 import type { Env } from "./types";
@@ -54,6 +55,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         aripaev: "https://iseteenindus.aripaev.ee/et/login",
         delfi: "https://www.delfi.ee/klient/konto",
       },
+      ai: describeAiConfig(env),
       authRequired: Boolean(env.DIGEST_ACCESS_TOKEN),
     });
   }

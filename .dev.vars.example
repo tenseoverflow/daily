@@ -6,5 +6,11 @@ ARIPAEV_PASSWORD=replace-me
 DELFI_EMAIL=you@example.com
 DELFI_PASSWORD=replace-me
 
+# AI: workers | ollama | auto
+# For local --local wrangler, use ollama (Workers AI needs remote):
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1
+
 # Optional site lock
 DIGEST_ACCESS_TOKEN=optional-long-random-string
