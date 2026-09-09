@@ -56,7 +56,15 @@ function renderDigest(digest) {
   for (const [i, story] of (digest.articles || []).entries()) {
     const li = document.createElement("li");
     li.className = "story";
-    li.style.animationDelay = `${0.05 * i}s`;
+
+    if (story.imageUrl) {
+      const img = document.createElement("img");
+      img.className = "story-image";
+      img.src = story.imageUrl;
+      img.alt = story.title;
+      img.loading = "lazy";
+      li.appendChild(img);
+    }
 
     const top = document.createElement("div");
     top.className = "story-top";

@@ -33,6 +33,7 @@ export async function ensureSchema(db: D1Database): Promise<void> {
         summary TEXT,
         scraped INTEGER NOT NULL DEFAULT 0,
         scrape_error TEXT,
+        image_url TEXT,
         FOREIGN KEY (digest_id) REFERENCES digests(id)
       )
     `),
@@ -134,8 +135,8 @@ export async function saveDigestSuccess(
         .prepare(
           `INSERT INTO digest_articles (
             id, digest_id, rank, source, title, url, published_at,
-            importance_score, importance_reason, summary, scraped, scrape_error
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            importance_score, importance_reason, summary, scraped, scrape_error, image_url
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           crypto.randomUUID(),
@@ -150,6 +151,7 @@ export async function saveDigestSuccess(
           a.summary,
           a.scraped ? 1 : 0,
           a.scrapeError ?? null,
+          a.imageUrl ?? null,
         ),
     );
   });
@@ -196,6 +198,7 @@ function toView(
       summary: a.summary,
       scraped: !!a.scraped,
       scrapeError: a.scrape_error,
+      imageUrl: a.image_url,
     })),
   };
 }

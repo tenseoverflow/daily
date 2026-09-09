@@ -71,6 +71,7 @@ ${clip(article.text || h.description || h.title)}`,
       summary,
       scraped: article.scraped,
       scrapeError: article.error,
+      imageUrl: article.imageUrl,
     });
   }
 

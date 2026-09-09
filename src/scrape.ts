@@ -64,11 +64,15 @@ function usableArticleText(text: string, fallback: string): string {
 function extractFromHtml(html: string, fallbackTitle: string): {
   title: string;
   text: string;
+  imageUrl?: string;
 } {
   const titleMatch =
     html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i) ||
     html.match(/<title[^>]*>([^<]+)/i);
   const title = (titleMatch?.[1] || fallbackTitle).trim();
+
+  const imageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i);
+  const imageUrl = imageMatch?.[1]?.trim();
 
   let best = "";
   for (const sel of [
@@ -99,7 +103,7 @@ function extractFromHtml(html: string, fallbackTitle: string): {
       .slice(0, 6000);
   }
 
-  return { title, text: best.slice(0, 12000) };
+  return { title, text: best.slice(0, 12000), imageUrl };
 }
 
 async function extractPageText(page: Page): Promise<string> {
@@ -311,6 +315,10 @@ async function scrapeWithBrowser(
     await new Promise((r) => setTimeout(r, 1500));
     const raw = (await extractPageText(page)).slice(0, 12000);
     const title = (await page.title()) || headline.title;
+    const imageUrl = await page.evaluate(() => {
+      const meta = document.querySelector<HTMLMetaElement>('meta[property="og:image"]');
+      return meta?.content?.trim() || undefined;
+    });
     const text = usableArticleText(raw, headline.description || headline.title);
     const scraped =
       text.length > 200 &&
@@ -322,6 +330,7 @@ async function scrapeWithBrowser(
       text,
       scraped,
       error: scraped ? undefined : "Extracted text too short or paywalled",
+      imageUrl,
     };
   } finally {
     await page.close().catch(() => undefined);
@@ -346,7 +355,7 @@ async function scrapeWithFetch(headline: RankedHeadline): Promise<ScrapedArticle
     };
   }
   const html = await res.text();
-  const { title, text } = extractFromHtml(html, headline.title);
+  const { title, text, imageUrl } = extractFromHtml(html, headline.title);
   const body = usableArticleText(text, headline.description || "");
   const scraped =
     Boolean(body) &&
@@ -359,6 +368,7 @@ async function scrapeWithFetch(headline: RankedHeadline): Promise<ScrapedArticle
     text: body || headline.description || headline.title,
     scraped,
     error: scraped ? undefined : "Likely paywalled or sparse HTML",
+    imageUrl,
   };
 }
 
