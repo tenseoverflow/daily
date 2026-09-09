@@ -1,4 +1,4 @@
-import { chat } from "./ai";
+import { chatForRanking, logTruncatedResponse, shouldRetryCursor } from "./ai";
 import { intVar } from "./config";
 import type { Env, Headline, RankedHeadline } from "./types";
 
@@ -92,22 +92,44 @@ Return ONLY a JSON array (no prose) with objects:
 Headlines:
 ${JSON.stringify(catalog, null, 2)}`;
 
-  try {
-    const text = await chat(env, {
-      messages: [
-        {
-          role: "system",
-          content:
-            "Return only valid JSON arrays. No markdown unless required for JSON.",
-        },
-        { role: "user", content: prompt },
-      ],
-      maxTokens: 1200,
-      temperature: 0.2,
-    });
+  const chatOptions = {
+    messages: [
+      {
+        role: "system" as const,
+        content:
+          "Return only valid JSON arrays. No markdown unless required for JSON.",
+      },
+      { role: "user" as const, content: prompt },
+    ],
+    maxTokens: 1200,
+    temperature: 0.2,
+  };
 
-    const arr = extractJsonArray(text);
-    if (!arr) return heuristicRank(headlines, topN);
+  try {
+    let result = await chatForRanking(env, chatOptions, "workers");
+    let arr = extractJsonArray(result.text);
+    
+    if (!arr) {
+      logTruncatedResponse(result.text, result.provider);
+      
+      if (shouldRetryCursor(env)) {
+        try {
+          console.log("Retrying ranking with Cursor after Workers AI parse failure");
+          result = await chatForRanking(env, chatOptions, "cursor");
+          arr = extractJsonArray(result.text);
+          
+          if (!arr) {
+            logTruncatedResponse(result.text, result.provider);
+            return heuristicRank(headlines, topN);
+          }
+        } catch (retryErr) {
+          console.warn("Cursor retry failed:", retryErr);
+          return heuristicRank(headlines, topN);
+        }
+      } else {
+        return heuristicRank(headlines, topN);
+      }
+    }
 
     const byId = new Map(headlines.map((h) => [h.id, h]));
     const ranked: RankedHeadline[] = [];
