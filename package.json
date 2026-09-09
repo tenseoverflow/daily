@@ -1,0 +1,38 @@
+{
+  "name": "daily",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "wrangler d1 execute daily_digest --local --file=./schema.sql",
+    "db:migrate:remote": "wrangler d1 execute daily_digest --remote --file=./schema.sql"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tenseoverflow/daily.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tenseoverflow/daily/issues"
+  },
+  "homepage": "https://github.com/tenseoverflow/daily#readme",
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.111.0"
+  },
+  "type": "module"
+}

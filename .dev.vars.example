@@ -1,0 +1,24 @@
+# Äripäev Ä-konto — https://iseteenindus.aripaev.ee/et/login
+ARIPAEV_EMAIL=you@example.com
+ARIPAEV_PASSWORD=replace-me
+
+# Delfi (Piano ID) — open login from https://www.delfi.ee/klient/konto
+DELFI_EMAIL=you@example.com
+DELFI_PASSWORD=replace-me
+
+# AI: workers | ollama | cursor | auto
+# For local --local wrangler, use ollama (Workers AI needs remote):
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1
+
+# Cursor Cloud Agents API (no-repo text runs) — https://cursor.com/dashboard → API Keys
+# CURSOR_API_KEY=crsr_...
+# AI_PROVIDER=cursor
+# Leave CURSOR_MODEL unset to use your Cursor account default, or pin an id from:
+#   curl -sS https://api.cursor.com/v1/models -H "Authorization: Bearer $CURSOR_API_KEY"
+# CURSOR_MODEL=composer-2.5
+# CURSOR_API_BASE_URL=https://api.cursor.com
+
+# Optional site lock
+DIGEST_ACCESS_TOKEN=optional-long-random-string

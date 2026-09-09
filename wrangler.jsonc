@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "daily",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "browser": {
+    "binding": "BROWSER"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "daily_digest",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "preview_database_id": "local-daily-digest"
+    }
+  ],
+  "triggers": {
+    // 06:00 UTC ≈ 09:00 Europe/Tallinn during EEST (summer)
+    "crons": ["0 6 * * *"]
+  },
+  "vars": {
+    "TIMEZONE": "Europe/Tallinn",
+    "DIGEST_HOUR": "9",
+    "TOP_HEADLINES": "8",
+    "MAX_FEED_ITEMS": "40",
+    // workers | ollama | cursor | auto (auto = Workers → Ollama → Cursor)
+    "AI_PROVIDER": "auto",
+    "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
+    "OLLAMA_MODEL": "llama3.1",
+    "CURSOR_API_BASE_URL": "https://api.cursor.com"
+    // Optional: set CURSOR_MODEL in .dev.vars / vars to pin a model id from GET /v1/models.
+    // When omitted, Cursor uses your account/team default.
+  }
+}
