@@ -11,7 +11,7 @@ Personal morning news digest for Estonia. Every day at **09:00 Europe/Tallinn** 
 
 - Cloudflare Workers (`scheduled` cron + HTTP API)
 - D1 (digest storage)
-- Workers AI **or Ollama** (ranking + summaries)
+- Workers AI (ranking + summaries)
 - Browser Rendering / Puppeteer (authenticated scrape)
 - Static site in `public/`
 
@@ -20,18 +20,10 @@ Personal morning news digest for Estonia. Every day at **09:00 Europe/Tallinn** 
 | `AI_PROVIDER` | Behavior |
 |---------------|----------|
 | `workers` | Cloudflare Workers AI |
-| `ollama` | Local/remote [Ollama](https://ollama.com) at `OLLAMA_BASE_URL` |
 | `cursor` | [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints) (no-repo agent → `run.result`) |
-| `auto` (default) | Workers AI → Ollama → Cursor |
+| `auto` (default) | Workers AI → Cursor |
 
 ```bash
-# local Ollama (good with wrangler --local)
-ollama pull llama3.1
-# in .dev.vars:
-# AI_PROVIDER=ollama
-# OLLAMA_BASE_URL=http://127.0.0.1:11434
-# OLLAMA_MODEL=llama3.1
-
 # Cursor API (create key at cursor.com/dashboard → API Keys)
 # npx wrangler secret put CURSOR_API_KEY
 # AI_PROVIDER=cursor
@@ -41,8 +33,7 @@ ollama pull llama3.1
 ```
 
 Notes:
-- Deployed Workers can only reach Ollama if `OLLAMA_BASE_URL` is a public/tunneled host.
-- Cursor has no OpenAI-style `/v1/chat/completions`; Daily uses a **no-repo cloud agent** per prompt and reads the finished run’s `result`. That is slower and uses Cloud Agent quota — prefer Workers/Ollama for routine digests.
+- Cursor has no OpenAI-style `/v1/chat/completions`; Daily uses a **no-repo cloud agent** per prompt and reads the finished run’s `result`. That is slower and uses Cloud Agent quota — 
 - If you see `invalid_model`, unset `CURSOR_MODEL` or set it to an id returned by `GET /v1/models` for your key.
 
 ## Setup

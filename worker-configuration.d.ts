@@ -11,8 +11,6 @@ interface __BaseEnv_Env {
 	TOP_HEADLINES: "8";
 	MAX_FEED_ITEMS: "40";
 	AI_PROVIDER: "auto";
-	OLLAMA_BASE_URL: "http://127.0.0.1:11434";
-	OLLAMA_MODEL: "llama3.1";
 	CURSOR_API_BASE_URL: "https://api.cursor.com";
 }
 declare namespace Cloudflare {
@@ -26,7 +24,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "TIMEZONE" | "DIGEST_HOUR" | "TOP_HEADLINES" | "MAX_FEED_ITEMS" | "AI_PROVIDER" | "OLLAMA_BASE_URL" | "OLLAMA_MODEL" | "CURSOR_API_BASE_URL">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "TIMEZONE" | "DIGEST_HOUR" | "TOP_HEADLINES" | "MAX_FEED_ITEMS" | "AI_PROVIDER" | "CURSOR_API_BASE_URL">> {}
 }
 
 // Begin runtime types

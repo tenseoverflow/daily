@@ -9,12 +9,8 @@ export type Env = Cloudflare.Env & {
   DELFI_PASSWORD?: string;
   /** Optional bearer token protecting the digest API + site. */
   DIGEST_ACCESS_TOKEN?: string;
-  /** AI backend: workers | ollama | cursor | auto */
+  /** AI backend: workers | cursor | auto */
   AI_PROVIDER?: string;
-  /** Ollama base URL (default http://127.0.0.1:11434). */
-  OLLAMA_BASE_URL?: string;
-  /** Ollama model name (default llama3.1). */
-  OLLAMA_MODEL?: string;
   /** Cursor user/service API key (crsr_...). */
   CURSOR_API_KEY?: string;
   /** Cursor Cloud Agents API base (default https://api.cursor.com). */
