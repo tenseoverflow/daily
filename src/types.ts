@@ -54,12 +54,14 @@ export interface ScrapedArticle {
   text: string;
   scraped: boolean;
   error?: string;
+  imageUrl?: string;
 }
 
 export interface SummarizedArticle extends RankedHeadline {
   summary: string;
   scraped: boolean;
   scrapeError?: string;
+  imageUrl?: string;
 }
 
 export interface DigestRecord {
@@ -85,6 +87,7 @@ export interface DigestArticleRecord {
   summary: string | null;
   scraped: number;
   scrape_error: string | null;
+  image_url: string | null;
 }
 
 export interface DigestView {
@@ -107,5 +110,6 @@ export interface DigestView {
     summary: string | null;
     scraped: boolean;
     scrapeError: string | null;
+    imageUrl: string | null;
   }>;
 }

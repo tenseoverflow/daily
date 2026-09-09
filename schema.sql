@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS digest_articles (
   summary TEXT,
   scraped INTEGER NOT NULL DEFAULT 0,
   scrape_error TEXT,
+  image_url TEXT,
   FOREIGN KEY (digest_id) REFERENCES digests(id)
 );
 
