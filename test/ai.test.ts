@@ -4,9 +4,7 @@ import type { Env } from "../src/types";
 
 function baseEnv(overrides: Record<string, unknown> = {}): Env {
   return {
-    AI_PROVIDER: "ollama",
-    OLLAMA_BASE_URL: "http://127.0.0.1:11434",
-    OLLAMA_MODEL: "llama3.1",
+    AI_PROVIDER: "workers",
     ...overrides,
   } as unknown as Env;
 }
@@ -25,52 +23,6 @@ describe("describeAiConfig", () => {
     expect(cfg.cursorConfigured).toBe(true);
     expect(cfg.cursorModel).toBeNull();
     expect(cfg.cursorApiBaseUrl).toBe("https://api.cursor.com");
-  });
-});
-
-describe("chat ollama", () => {
-  it("posts to /api/chat and returns message content", async () => {
-    const seen = {
-      url: "",
-      body: {} as {
-        model?: string;
-        stream?: boolean;
-        messages?: Array<{ content: string }>;
-      },
-    };
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        seen.url = String(input);
-        seen.body = JSON.parse(String(init?.body));
-        return Response.json({
-          message: { role: "assistant", content: "  hello from ollama  " },
-        });
-      }),
-    );
-
-    const text = await chat(baseEnv(), {
-      messages: [{ role: "user", content: "hi" }],
-      maxTokens: 50,
-      temperature: 0.1,
-    });
-
-    expect(text).toBe("hello from ollama");
-    expect(seen.url).toBe("http://127.0.0.1:11434/api/chat");
-    expect(seen.body.model).toBe("llama3.1");
-    expect(seen.body.stream).toBe(false);
-    expect(seen.body.messages?.[0]?.content).toBe("hi");
-  });
-
-  it("throws on non-OK ollama responses", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response("model not found", { status: 404 })),
-    );
-
-    await expect(
-      chat(baseEnv(), { messages: [{ role: "user", content: "hi" }] }),
-    ).rejects.toThrow(/Ollama 404/);
   });
 });
 

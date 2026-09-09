@@ -32,10 +32,8 @@
     "DIGEST_HOUR": "9",
     "TOP_HEADLINES": "8",
     "MAX_FEED_ITEMS": "40",
-    // workers | ollama | cursor | auto (auto = Workers → Ollama → Cursor)
+    // workers | cursor | auto (auto = Workers → Cursor)
     "AI_PROVIDER": "auto",
-    "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
-    "OLLAMA_MODEL": "llama3.1",
     "CURSOR_API_BASE_URL": "https://api.cursor.com"
     // Optional: set CURSOR_MODEL in .dev.vars / vars to pin a model id from GET /v1/models.
     // When omitted, Cursor uses your account/team default.

@@ -1,7 +1,7 @@
 import { AI_MODEL } from "./config";
 import type { Env } from "./types";
 
-export type AiProviderName = "workers" | "ollama" | "cursor" | "auto";
+export type AiProviderName = "workers" | "cursor" | "auto";
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -23,23 +23,10 @@ const TERMINAL_RUN = new Set([
 
 function providerName(env: Env): AiProviderName {
   const raw = (env.AI_PROVIDER || "workers").toLowerCase();
-  if (
-    raw === "ollama" ||
-    raw === "workers" ||
-    raw === "cursor" ||
-    raw === "auto"
-  ) {
+  if (raw === "workers" || raw === "cursor" || raw === "auto") {
     return raw;
   }
   return "workers";
-}
-
-function ollamaBaseUrl(env: Env): string {
-  return (env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
-}
-
-function ollamaModel(env: Env): string {
-  return env.OLLAMA_MODEL || "llama3.1";
 }
 
 function cursorApiBase(env: Env): string {
@@ -79,34 +66,6 @@ async function chatWorkersAi(env: Env, options: ChatOptions): Promise<string> {
     temperature: options.temperature ?? 0.3,
   })) as { response?: string };
   return (result.response ?? "").trim();
-}
-
-async function chatOllama(env: Env, options: ChatOptions): Promise<string> {
-  const url = `${ollamaBaseUrl(env)}/api/chat`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      model: ollamaModel(env),
-      stream: false,
-      options: {
-        temperature: options.temperature ?? 0.3,
-        num_predict: options.maxTokens ?? 700,
-      },
-      messages: options.messages,
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Ollama ${res.status}: ${body.slice(0, 200)}`);
-  }
-
-  const data = (await res.json()) as {
-    message?: { content?: string };
-    response?: string;
-  };
-  return (data.message?.content ?? data.response ?? "").trim();
 }
 
 function formatCursorPrompt(messages: ChatMessage[]): string {
@@ -236,8 +195,6 @@ async function chatCursor(env: Env, options: ChatOptions): Promise<string> {
 
 export function describeAiConfig(env: Env): {
   provider: AiProviderName;
-  ollamaBaseUrl: string;
-  ollamaModel: string;
   workersModel: string;
   cursorConfigured: boolean;
   cursorModel: string | null;
@@ -245,8 +202,6 @@ export function describeAiConfig(env: Env): {
 } {
   return {
     provider: providerName(env),
-    ollamaBaseUrl: ollamaBaseUrl(env),
-    ollamaModel: ollamaModel(env),
     workersModel: AI_MODEL,
     cursorConfigured: Boolean(env.CURSOR_API_KEY),
     cursorModel: cursorModel(env) ?? null,
@@ -255,19 +210,18 @@ export function describeAiConfig(env: Env): {
 }
 
 async function callProvider(
-  name: "workers" | "ollama" | "cursor",
+  name: "workers" | "cursor",
   env: Env,
   options: ChatOptions,
 ): Promise<string> {
   if (name === "workers") return chatWorkersAi(env, options);
-  if (name === "ollama") return chatOllama(env, options);
   return chatCursor(env, options);
 }
 
 /**
- * Chat completion via Workers AI, Ollama, and/or Cursor Cloud Agents.
- * - workers / ollama / cursor: that backend only
- * - auto: Workers AI → Ollama → Cursor
+ * Chat completion via Workers AI and/or Cursor Cloud Agents.
+ * - workers / cursor: that backend only
+ * - auto: Workers AI → Cursor
  */
 export async function chat(env: Env, options: ChatOptions): Promise<string> {
   const mode = providerName(env);
@@ -277,7 +231,7 @@ export async function chat(env: Env, options: ChatOptions): Promise<string> {
   }
 
   const errors: string[] = [];
-  for (const name of ["workers", "ollama", "cursor"] as const) {
+  for (const name of ["workers", "cursor"] as const) {
     if (name === "cursor" && !env.CURSOR_API_KEY) continue;
     try {
       return await callProvider(name, env, options);

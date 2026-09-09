@@ -24,8 +24,7 @@ cloud VM.
 - Run `npm run db:migrate` once to create the local D1 database before starting `wrangler dev`;
   local D1 state persists under `.wrangler/` (gitignored).
 - Full AI ranking/summaries, and authenticated paywall scraping, require either
-  `wrangler dev --remote` with a Cloudflare account, or a local Ollama at
-  `OLLAMA_BASE_URL`, plus publisher secrets in `.dev.vars`. None of these are needed to
+  `wrangler dev --remote` with a Cloudflare account plus publisher secrets in `.dev.vars`. None of these are needed to
   boot the app or run the pipeline end-to-end locally.
 - There is no ESLint/build step. `npm run typecheck` (`tsc --noEmit`) is the closest lint;
   Wrangler bundles on dev/deploy.

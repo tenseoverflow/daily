@@ -6,11 +6,9 @@ ARIPAEV_PASSWORD=replace-me
 DELFI_EMAIL=you@example.com
 DELFI_PASSWORD=replace-me
 
-# AI: workers | ollama | cursor | auto
-# For local --local wrangler, use ollama (Workers AI needs remote):
-AI_PROVIDER=ollama
-OLLAMA_BASE_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=llama3.1
+# AI: workers | cursor | auto
+# For local --local wrangler, Workers AI degrades to keyword heuristic fallback.
+AI_PROVIDER=workers
 
 # Cursor Cloud Agents API (no-repo text runs) — https://cursor.com/dashboard → API Keys
 # CURSOR_API_KEY=crsr_...
