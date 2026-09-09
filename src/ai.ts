@@ -37,12 +37,10 @@ function cursorApiBase(env: Env): string {
 }
 
 function cursorModel(env: Env): string | undefined {
-  const id = env.CURSOR_MODEL?.trim();
-  return id || undefined;
+  return env.CURSOR_MODEL?.trim() || undefined;
 }
 
 function cursorAuthHeader(apiKey: string): string {
-  // Cloud Agents API accepts Bearer or Basic (key as username, empty password)
   return `Bearer ${apiKey}`;
 }
 
