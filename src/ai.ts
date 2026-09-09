@@ -241,3 +241,35 @@ export async function chat(env: Env, options: ChatOptions): Promise<string> {
 
   throw new Error(`AI unavailable (${errors.join(" | ") || "no providers"})`);
 }
+
+export interface RankingChatResult {
+  text: string;
+  provider: "workers" | "cursor";
+}
+
+/**
+ * Chat for ranking with explicit provider selection.
+ */
+export async function chatForRanking(
+  env: Env,
+  options: ChatOptions,
+  preferredProvider: "workers" | "cursor",
+): Promise<RankingChatResult> {
+  const text = await callProvider(preferredProvider, env, options);
+  return { text, provider: preferredProvider };
+}
+
+export function logTruncatedResponse(
+  text: string,
+  provider: "workers" | "cursor",
+): void {
+  const truncated = text.slice(0, 300);
+  console.warn(
+    `JSON parse failed from ${provider}, raw response (truncated): ${truncated}${text.length > 300 ? "..." : ""}`,
+  );
+}
+
+export function shouldRetryCursor(env: Env): boolean {
+  const mode = providerName(env);
+  return mode === "auto" && Boolean(env.CURSOR_API_KEY);
+}
